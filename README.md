@@ -16,7 +16,7 @@ After installation, a new option will be added to proxy context menu - "Export a
 
 # Demo
 
-![Demo](https://raw.githubusercontent.com/ngo/burp-export-as-script/sample.gif)
+![Demo](https://raw.githubusercontent.com/ngo/burp-export-as-script/master/sample.gif)
 
 # TODO:
 
