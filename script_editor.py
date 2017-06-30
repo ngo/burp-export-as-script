@@ -1,6 +1,10 @@
-from javax.swing import JFrame, JPanel, JSplitPane, JTable, JEditorPane, GroupLayout, JButton, JScrollPane, JFileChooser
+from javax.swing import ( 
+        JFrame, JPanel, JSplitPane, JTable, JEditorPane, 
+        GroupLayout, JButton, JScrollPane, JFileChooser,
+        JToggleButton, JCheckBox, BorderFactory
+)
 from javax.swing.table import AbstractTableModel
-from java.awt import Dimension
+from java.awt import Dimension, GridLayout
 
 from collections import namedtuple
 
@@ -60,12 +64,25 @@ class ScriptEditor(object):
         frame.add(mainPanel)
         
         button_pane = JPanel()
-        options_button = JButton("Options")
         regen_button = JButton("Regenerate", actionPerformed=self.gen_script)
         save_button = JButton("Save", actionPerformed=self.save)
         close_button = JButton("Close", actionPerformed=lambda evt: frame.dispose())
 
-        button_pane.add(options_button)
+        self._proxy_checkbox = JCheckBox("Enable proxy through burp")
+        self._no_ssl_checkbox = JCheckBox("Disable ssl verification")
+        self._debug_checkbox = JCheckBox("Debugging output")
+        self._auto_cookie_checkbox = JCheckBox("Allow automatic cookie handling")
+        self._debug_checkbox.setSelected(True)
+        self._no_ssl_checkbox.setSelected(True)
+        checkbox_pane = JPanel()
+        checkbox_pane.setBorder(BorderFactory.createTitledBorder("Options"))
+        checkbox_pane.setLayout(GridLayout(4,3))
+
+        checkbox_pane.add(self._proxy_checkbox)
+        checkbox_pane.add(self._no_ssl_checkbox)
+        checkbox_pane.add(self._debug_checkbox)
+        checkbox_pane.add(self._auto_cookie_checkbox)
+        
         button_pane.add(regen_button)
         button_pane.add(save_button)
         button_pane.add(close_button)
@@ -75,32 +92,52 @@ class ScriptEditor(object):
         ) );
 
         reqtab = JTable(ReqListDataModel(self._messages))
+        reqtab.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN)
+        reqtab.getColumnModel().getColumn(0).setPreferredWidth(40)
+        reqtab.getColumnModel().getColumn(1).setPreferredWidth(100)
+        reqtab.getColumnModel().getColumn(2).setMinWidth(600)
+        reqtab.getColumnModel().getColumn(3).setPreferredWidth(100)
+        reqtab.getColumnModel().getColumn(4).setPreferredWidth(100)
         self._editor = JEditorPane()
+        upper = JScrollPane(reqtab)
+        lower = JScrollPane(self._editor)
         reqtab_editor = JSplitPane(
                 JSplitPane.VERTICAL_SPLIT,
-                JScrollPane(reqtab),
-                JScrollPane(self._editor)
+                upper,
+                lower
         )
-
         layout = GroupLayout(mainPanel)
         layout.setAutoCreateGaps(True)
         layout.setAutoCreateContainerGaps(True)
         mainPanel.setLayout(layout)
 
         layout.setVerticalGroup(
-            layout.createSequentialGroup().addComponent(reqtab_editor).addComponent(button_pane)
+            layout.createSequentialGroup().addComponent(reqtab_editor).addComponent(checkbox_pane).addComponent(button_pane)
         )
         layout.setHorizontalGroup(
             layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(GroupLayout.Alignment.LEADING)
-                    .addComponent(reqtab_editor).addComponent(button_pane)
+                    .addComponent(reqtab_editor).addComponent(checkbox_pane).addComponent(button_pane)
                 )
         )
         self.gen_script()
         frame.setVisible(True)
+        reqtab_editor.setDividerLocation(150)
 
     def gen_script(self, _=None):
-        script = generate_script(self._messages)
+        proxy_url = None
+        if self._proxy_checkbox.isSelected():
+            proxy_url = 'http://localhost:8080'
+        loglevel = "INFO"
+        if self._debug_checkbox.isSelected():
+            loglevel = "DEBUG"
+        script = generate_script(
+            self._messages,
+            disable_ssl_verification=self._no_ssl_checkbox.isSelected(),
+            proxy=proxy_url,
+            loglevel=loglevel,
+            auto_cookie=self._auto_cookie_checkbox.isSelected()
+        )
         self._editor.setText(script)
 
     def save(self, _):
