@@ -20,7 +20,7 @@ After installation, a new option will be added to proxy context menu - "Export a
 
 # TODO:
 
-* Special treatment for session cookies
+* ~Special treatment for cookies (i.e. parse and apply cookies from responses)~
 * Automatic derivation of data dependencies between requests (a-la burp's macro editor)
-* Customization of code templates, other languages, multithreading, bruteforce etc.a
+* Customization of code templates, other languages, multithreading, bruteforce etc.
 * ...
